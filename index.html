@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAC WC 2026-Predict</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --inner-bg: #161616;
+            --gold: #d4af37;
+            --gold-hover: #bda032;
+            --text-color: #ffffff;
+            --text-muted: #7a7a7a;
+            --blue-badge: #1d3557;
+            --blue-text: #457b9d;
+            --green-badge: #1b4332;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0d0d0d;
+            background-image: linear-gradient(90deg, rgba(255,255,255,0.01) 50%, transparent 50%);
+            background-size: 40px 100%;
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background-color: var(--bg-color);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+            border: 1px solid #222;
+        }
+
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h3 { color: var(--text-muted); font-size: 13px; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 2px; }
+        .header h1 { font-size: 26px; color: var(--text-color); margin: 0; font-weight: 700; }
+
+        .tabs { display: flex; justify-content: space-around; margin-bottom: 25px; border-bottom: 1px solid #222; }
+        .tab { padding: 12px 24px; color: var(--text-muted); cursor: pointer; font-weight: 600; font-size: 15px; transition: 0.3s ease; }
+        .tab.active { color: var(--gold); border-bottom: 3px solid var(--gold); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card { background-color: var(--card-bg); border-radius: 14px; padding: 18px; margin-bottom: 15px; border: 1px solid #2a2a2a; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+        select, input[type="text"] { width: 100%; padding: 12px; background-color: var(--inner-bg); border: 1px solid #333; border-radius: 8px; color: white; font-size: 14px; box-sizing: border-box; outline: none; }
+        
+        .add-name-section { display: flex; gap: 10px; margin-top: 12px; }
+        .btn-action { background-color: var(--gold); color: black; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn-action:hover { background-color: var(--gold-hover); }
+        .btn-add { width: auto; background-color: var(--gold); color: black; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;}
+        .btn-refresh { background-color: #2b2b2b; color: white; border: 1px solid #444; margin-bottom: 15px; }
+        .btn-refresh:hover { background-color: #333; }
+        .btn-submit { margin-top: 10px; background-color: #52b788; color: white; }
+        .btn-submit:hover { background-color: #40916c; }
+
+        .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .match-title { font-weight: 600; font-size: 16px; }
+        .badge { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; background-color: var(--blue-badge); color: var(--blue-text); }
+
+        .prediction-options { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .opt-btn { background-color: var(--inner-bg); border: 1px solid #333; color: #dddddd; padding: 12px 8px; border-radius: 8px; cursor: pointer; text-align: center; font-size: 14px; transition: 0.2s; }
+        .opt-btn.selected { background-color: #2a2515; border-color: var(--gold); color: var(--gold); font-weight: bold; }
+        .hint-text { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 12px; }
+
+        .leaderboard-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .leaderboard-table th, .leaderboard-table td { padding: 12px; text-align: center; border-bottom: 1px solid #2a2a2a; }
+        .rank-badge { background-color: var(--inner-bg); padding: 4px 8px; border-radius: 6px; }
+        .no-data { text-align: center; color: var(--text-muted); padding: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <h3>HAC Predict</h3>
+        <h1>WC 2026 - R32</h1>
+    </div>
+
+    <div class="tabs">
+        <div class="tab" onclick="switchTab(0)">Ranks</div>
+        <div class="tab active" onclick="switchTab(1)">Predictions</div>
+        <div class="tab" onclick="switchTab(2)">Matchs</div>
+    </div>
+
+    <!-- SECTION 1: الترتيب -->
+    <div id="tab-leaderboard" class="tab-content">
+        <button class="btn-action btn-refresh" onclick="fetchLeaderboard()">Update Rank 🔄</button>
+        <div class="card">
+            <h3 style="margin-top:0; font-size:16px; color:var(--gold);">Leaderboard</h3>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <tr>
+                        <td colspan="3" class="no-data">Update Score</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SECTION 2: توقعاتي -->
+    <div id="tab-predictions" class="tab-content active">
+        <div class="card">
+            <div class="form-group">
+                <label>Choose your name</label>
+                <select id="namesDropdown" onchange="loadUserPredictions()">
+                    <option value="">-- Choose your name first --</option>
+                </select>
+            </div>
+            <div class="add-name-section">
+                <input type="text" id="newNameInput" placeholder="Add your name for new user">
+                <button class="btn-add" onclick="addName()">Add</button>
+            </div>
+        </div>
+
+        <div id="matchesContainer"></div>
+
+        <div style="margin-bottom: 20px;">
+            <button class="btn-action btn-submit" onclick="submitPredictionsToCloud()">📤 Save my predictions</button>
+        </div>
+    </div>
+
+    <!-- SECTION 3: جدول المباريات -->
+    <div id="tab-schedule" class="tab-content">
+        <div class="card">
+            <h3 style="margin-top:0; font-size:16px; color:var(--gold); margin-bottom:15px;">جدول مواجهات دور الـ 32</h3>
+            <div id="scheduleContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 👇👇 حط رابط الـ Web App بتاعك هنا 👇👇
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOAUMj-b-YXuYjADRIvETtF5aHxImYJQ-KBB7vHwhFNDXBNWkaqsgndfQo66lsbVID3A/exec";
+
+    // تم إدخال مباريات دور الـ 32 من الصورة المرفقة
+    const worldCupMatches = [
+        { id: "m1", teamA: "Canada", teamB: "South Africa", label: "الأحد 28 يونيو - 22:00" },
+        { id: "m2", teamA: "Japan", teamB: "Brazil", label: "الإثنين 29 يونيو - 20:00" },
+        { id: "m3", teamA: "Paraguay", teamB: "Germany", label: "الإثنين 29 يونيو - 23:30" },
+        { id: "m4", teamA: "Morocco", teamB: "Netherlands", label: "الثلاثاء 30 يونيو - 04:00" },
+        { id: "m5", teamA: "Norway", teamB: "Ivory Coast", label: "الثلاثاء 30 يونيو - 20:00" },
+        { id: "m6", teamA: "Sweden", teamB: "France", label: "الأربعاء 1 يوليو - 00:00" },
+        { id: "m7", teamA: "Ecuador", teamB: "Mexico", label: "الأربعاء 1 يوليو - 04:00" },
+        { id: "m8", teamA: "Congo", teamB: "England", label: "الأربعاء 1 يوليو - 19:00" },
+        { id: "m9", teamA: "Senegal", teamB: "Belgium", label: "الأربعاء 1 يوليو - 23:00" },
+        { id: "m10", teamA: "Bosnia", teamB: "USA", label: "الخميس 2 يوليو - 03:00" },
+        { id: "m11", teamA: "Egypt", teamB: "Australia", label: "الجمعة 3 يوليو - 21:00" },
+        { id: "m12", teamA: "Cape Verde", teamB: "Argentina", label: "السبت 4 يوليو - 01:00" }
+    ];
+
+    document.addEventListener("DOMContentLoaded", function() {
+        loadStoredNames();
+        generateMatchesUI();
+    });
+
+    function generateMatchesUI() {
+        const matchesContainer = document.getElementById('matchesContainer');
+        const scheduleContainer = document.getElementById('scheduleContainer');
+        matchesContainer.innerHTML = "";
+        scheduleContainer.innerHTML = "";
+
+        worldCupMatches.forEach(match => {
+            matchesContainer.innerHTML += `
+                <div class="card" data-match-id="${match.id}">
+                    <div class="match-header">
+                        <div class="match-title">${match.teamA} vs ${match.teamB}</div>
+                        <span class="badge upcoming">دور الـ 32</span>
+                    </div>
+                    <div class="prediction-options">
+                        <div class="opt-btn" onclick="selectOption(this, '${match.teamA}')">${match.teamA}</div>
+                        <div class="opt-btn" onclick="selectOption(this, 'Draw')">Draw</div>
+                        <div class="opt-btn" onclick="selectOption(this, '${match.teamB}')">${match.teamB}</div>
+                    </div>
+                    <div class="hint-text">Choose your name to start</div>
+                </div>
+            `;
+            scheduleContainer.innerHTML += `
+                <div class="match-schedule-item" style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #222;">
+                    <div>
+                        <strong style="font-size:15px;">${match.teamA} × ${match.teamB}</strong>
+                        <div style="font-size:12px; color:var(--text-muted);">${match.label}</div>
+                    </div>
+                    <span class="badge upcoming">قريباً</span>
+                </div>
+            `;
+        });
+    }
+
+    function switchTab(tabIndex) {
+        const tabs = document.querySelectorAll('.tab');
+        const contents = document.querySelectorAll('.tab-content');
+        tabs.forEach((tab, index) => {
+            tab.classList.toggle('active', index === tabIndex);
+            contents[index].classList.toggle('active', index === tabIndex);
+        });
+        
+        // جلب البيانات تلقائياً عند فتح تبويب الترتيب
+        if(tabIndex === 0) {
+            fetchLeaderboard();
+        }
+    }
+
+    function addName() {
+        const input = document.getElementById('newNameInput');
+        const dropdown = document.getElementById('namesDropdown');
+        const nameText = input.value.trim();
+        if (nameText !== "") {
+            let storedNames = JSON.parse(localStorage.getItem('wc_users')) || [];
+            if(storedNames.includes(nameText)) { alert("الاسم موجود بالفعل!"); return; }
+            const newOption = document.createElement('option');
+            newOption.text = nameText; newOption.value = nameText;
+            dropdown.add(newOption); dropdown.value = nameText; 
+            input.value = ""; 
+            storedNames.push(nameText);
+            localStorage.setItem('wc_users', JSON.stringify(storedNames));
+            loadUserPredictions();
+        }
+    }
+
+    function loadStoredNames() {
+        const dropdown = document.getElementById('namesDropdown');
+        let storedNames = JSON.parse(localStorage.getItem('wc_users')) || [];
+        storedNames.forEach(name => {
+            const newOption = document.createElement('option');
+            newOption.text = name; newOption.value = name;
+            dropdown.add(newOption);
+        });
+    }
+
+    function selectOption(element, predictionValue) {
+        const currentName = document.getElementById('namesDropdown').value;
+        if (!currentName) { alert("Choose your name first!"); return; }
+        const matchCard = element.closest('.card');
+        const matchId = matchCard.getAttribute('data-match-id');
+        const siblings = element.parentNode.querySelectorAll('.opt-btn');
+        siblings.forEach(btn => btn.classList.remove('selected'));
+        element.classList.add('selected');
+        savePredictionLocal(currentName, matchId, predictionValue);
+    }
+
+    function savePredictionLocal(user, matchId, value) {
+        let allPredictions = JSON.parse(localStorage.getItem('wc_predictions')) || {};
+        if (!allPredictions[user]) allPredictions[user] = {};
+        allPredictions[user][matchId] = value;
+        localStorage.setItem('wc_predictions', JSON.stringify(allPredictions));
+    }
+
+    function loadUserPredictions() {
+        const currentName = document.getElementById('namesDropdown').value;
+        document.querySelectorAll('.opt-btn').forEach(btn => btn.classList.remove('selected'));
+        if (!currentName) return;
+        const allPredictions = JSON.parse(localStorage.getItem('wc_predictions')) || {};
+        const userPredictions = allPredictions[currentName];
+        if (userPredictions) {
+            Object.keys(userPredictions).forEach(matchId => {
+                const predictedValue = userPredictions[matchId];
+                const matchCard = document.querySelector(`[data-match-id="${matchId}"]`);
+                if (matchCard) {
+                    matchCard.querySelectorAll('.opt-btn').forEach(btn => {
+                        if (btn.innerText === predictedValue) btn.classList.add('selected');
+                    });
+                }
+            });
+        }
+    }
+
+    function submitPredictionsToCloud() {
+        const currentName = document.getElementById('namesDropdown').value;
+        if (!currentName) { alert("Choose your name first!"); return; }
+        const allPredictions = JSON.parse(localStorage.getItem('wc_predictions')) || {};
+        const userPredictions = allPredictions[currentName] || {};
+        if (Object.keys(userPredictions).length === 0) { alert("no predict found!"); return; }
+
+        const payload = { user: currentName, predictions: userPredictions };
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            alert(`تم إرسال توقعات ${currentName} بنجاح!`);
+        });
+    }
+
+    // الدالة السحرية لجلب الترتيب من جوجل شيت
+    function fetchLeaderboard() {
+        const tbody = document.getElementById('leaderboardBody');
+        tbody.innerHTML = `<tr><td colspan="3" class="no-data">جاري جلب النتائج... ⏳</td></tr>`;
+        
+        fetch(GOOGLE_SCRIPT_URL)
+            .then(response => response.json())
+            .then(data => {
+                tbody.innerHTML = "";
+                if(data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="no-data">لم يتم حساب أي نقاط بعد.</td></tr>`;
+                    return;
+                }
+                
+                // ترتيب الداتا من الأكبر للأصغر
+                data.sort((a, b) => b.points - a.points);
+                
+                data.forEach((user, index) => {
+                    let medal = `<span class="rank-badge">${index + 1}</span>`;
+                    if(index === 0) medal = `<span class="rank-badge">🥇 1</span>`;
+                    if(index === 1) medal = `<span class="rank-badge">🥈 2</span>`;
+                    if(index === 2) medal = `<span class="rank-badge">🥉 3</span>`;
+                    
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${medal}</td>
+                            <td style="font-weight:bold;">${user.name}</td>
+                            <td style="color:var(--gold); font-weight:bold;">${user.points}</td>
+                        </tr>
+                    `;
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching leaderboard:", error);
+                tbody.innerHTML = `<tr><td colspan="3" class="no-data" style="color:#e63946;">حدث خطأ في الاتصال، حاول مرة أخرى.</td></tr>`;
+            });
+    }
+</script>
+</body>
+</html>
