@@ -135,7 +135,7 @@
         <div id="matchesContainer"></div>
 
         <div style="margin-bottom: 20px;">
-            <button class="btn-action btn-submit" onclick="submitPredictionsToCloud()">📤 Save my predictions</button>
+            <button class="btn-action btn-t" onclick="submitPredictionsToCloud()">📤 Save my predictions</button>
         </div>
     </div>
 
@@ -295,7 +295,15 @@
         const userPredictions = allPredictions[currentName] || {};
         if (Object.keys(userPredictions).length === 0) { alert("no predict found!"); return; }
 
-        const payload = { user: currentName, predictions: userPredictions };
+        // التعديل هنا: بنضمن إننا بنبعت فقط التوقعات للماتشات الموجودة حالياً في الـ 16 ماتش
+        const filteredPredictions = {};
+        worldCupMatches.forEach(m => {
+            if (userPredictions[m.id]) {
+                filteredPredictions[m.id] = userPredictions[m.id];
+            }
+        });
+
+        const payload = { user: currentName, predictions: filteredPredictions };
         fetch(GOOGLE_SCRIPT_URL, {
             method: "POST",
             mode: "no-cors",
